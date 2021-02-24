@@ -1,13 +1,24 @@
+# A desktop app that allows kijiji and amazon webscraping and automatic email notifications
+
+# import requests to grab website HTML
 import requests
+# import BS4 for webscraping
 from bs4 import BeautifulSoup
+# import random to randomly choose a proxy for the URL request (to help fool anti-scrapers)
 import random
 import time
+# import os to access os variables like email and password
 import os
+# import smtplib to enable connecting to email server
 import smtplib
+# mime lets you send plain text and html emails
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+# tkinter is the python GUI
 import tkinter as tk
+# import using * wildcard so you don't need to use any 'tk' prefixes
 from tkinter import *
+# PIL (or pillow) allows you to use images in tkinter
 from PIL import Image, ImageTk
 
 def main():
@@ -18,7 +29,8 @@ def main():
     def clear_entry(event, entry):
         entry.delete(0, END)
         entry.configure(fg='black')
-
+    
+    # countdown function to get live GUI countdown
     def countdown():
         global t
         days = (t // 86400)
@@ -26,12 +38,14 @@ def main():
         minutes = (t - days * 86400 - hours * 3600) // 60
         secs = t % 60
         if t >= 0:
+            #ds-digital font is a downloaded font on my computer
             timer.configure(bg = 'black', fg = 'red', font = ('ds-digital', '26', 'bold'))
             timer['text'] = '{:02d}:{:02d}:{:02d}:{:02d}'.format(days, hours, minutes, secs)
             root.update()
             t -= 1
             timer.after(1000, countdown)
-
+    
+    # executes when the GUI button is clicked
     def button_command():
         #reset any past statuses to blank
         amazon_status['text'] = ''
@@ -42,6 +56,7 @@ def main():
         repeat_msg['text'] = ''
         timer.configure(bg = 'white')
         timer['text'] = ''
+        # update the root window to display these changes
         root.update()
 
         print(f"rare = {rareCheck.get()}, amazon = {amazoncheck.get()}, kij = {kijijicheck.get()}, low = {low_price_box.get()}, high = {high_price_box.get()}, dealer = {dealercheck.get()}")
@@ -130,6 +145,7 @@ def main():
     dealercheck = IntVar()
     dealer = Checkbutton(root, text = 'Filter Out Kijiji Distributors', variable = dealercheck, onvalue = True, offvalue = False)
 
+    # price filter options
     price_rng_label = tk.Label(root, text = 'Only show me items with prices between:')
 
     low_price_box = Entry(root, bd = 5, fg = 'gray', width = 8)
@@ -140,6 +156,7 @@ def main():
     high_price_box.insert(0, "Max")
     high_price_box.bind("<Button-1>", lambda event: clear_entry(event, high_price_box))
 
+    # filter out kijiji dealers
     rareCheck = IntVar()
     rare = Checkbutton(root, text = 'Only Email Me If There Are Results', variable = rareCheck) 
 
@@ -212,6 +229,7 @@ def main():
         print('Checking Kijiji...')
         kij_status.configure(text = "Checking Kijiji...")
         root.update()
+        # split the inputted search terms into separate words and add to URL
         ind_terms = search.split()
         base_URL = 'https://www.kijiji.ca/b-gta-greater-toronto-area/'
 
@@ -221,6 +239,7 @@ def main():
                 URL_add += '-' + ind_terms[i] 
         URL = base_URL + URL_add + '/k0l1700272?rb=true&dc=true'
 
+        # these come from the dev tab in chrome, network tab, copying a request as cURL, and translating to python
         headers = {
             'sec-ch-ua': '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
             'sec-ch-ua-mobile': '?0',
@@ -233,6 +252,7 @@ def main():
         proxies_list = ["128.199.109.241:8080","113.53.230.195:3128","125.141.200.53:80","125.141.200.14:80","128.199.200.112:138","149.56.123.99:3128","128.199.200.112:80","125.141.200.39:80","134.213.29.202:4444"]
         proxies = {'https//': random.choice(proxies_list)}
 
+        # access URL
         page = requests.get(URL, headers=headers, proxies=proxies)
         #check for HTTP status code exceptions
         try:
@@ -240,14 +260,18 @@ def main():
         except Exception as exc:
             print('There was a problem: %s' % (exc))
 
+        # get HTML of URL
         soup = BeautifulSoup(page.content, "lxml")
-
+        
+        # find all divs with class info in the HTML
         items = soup.find_all('div', class_='info')
         k_options = []
         #print(dealercheck.get())
+        # check if user selected to filter out kijiji dealers
         if dealercheck.get() == True:
             for item in items:
-                if 'class="dealer-logo-image"' in item:
+                #filter out any kijiji ads that have a dealer logo image
+                if soup.find('div', class_="dealer-logo-image"):
                     continue
                 else:
                     title = item.find('div', class_='title').get_text().strip()
@@ -270,7 +294,8 @@ def main():
                         continue
                     iteminfo['posted_date'] = posted_date
                     #print(f'price is {price}, high is {high_price_box.get()}, low is {low_price_box.get()}')
-                    if high_price_box.get() != 'Max' and low_price_box.get() != 'Min':
+                    # all these lines check the values of the input boxes on the GUI for price filtering
+                    if high_price_box.get() != 'Max' and high_price_box.get() != '' and low_price_box.get() != 'Min' and low_price_box.get() != '':
                         if float(high_price_box.get()) >= price and float(low_price_box.get()) <= price:
                             k_options.append(iteminfo)
                     elif high_price_box.get() != 'Max' and low_price_box.get() == 'Min':
@@ -281,7 +306,7 @@ def main():
                             k_options.append(iteminfo)
                     elif high_price_box.get() == 'Max' and low_price_box.get() == 'Min':
                         k_options.append(iteminfo)
-                    
+        # if we don't have to filter out kijiji dealers:            
         else:
             for item in items:
                 title = item.find('div', class_='title').get_text().strip()
@@ -315,7 +340,7 @@ def main():
                         k_options.append(iteminfo)
                 elif high_price_box.get() == 'Max' and low_price_box.get() == 'Min':
                     k_options.append(iteminfo)
-        
+        # sort by price.  Have to use a lambda function here, not sure why.
         k_options = sorted(k_options, key = lambda i: i['price'])
         for option in k_options:
             option['price'] = f"${option['price']}"
@@ -412,7 +437,7 @@ def main():
                     
         a_options = sorted(a_options, key = lambda i: i['price'])
         for option in a_options:
-            option['price'] = f"${option['price'][:-2]}"
+            option['price'] = f"${option['price']}"
         return a_options
 
     """  
@@ -445,7 +470,7 @@ def main():
         subject = subject.format(search)
         message["Subject"] = subject
 
-        # Create the plain-text and HTML version of your message    
+        # Create the plain-text and HTML version of message    
         text = """\
         ---Plain Text---
         Kijiji:
@@ -462,7 +487,7 @@ def main():
             </body>
         </html>
         """
-            
+        # check if user asked for results from amazon or kijiji
         if a_options == 'Not Selected':
             amazon_html = ''
         elif len(a_options) < 1:
@@ -555,6 +580,4 @@ def main():
 if __name__ == '__main__':
     main()
     
-    # kij_text = "placeholder"
-    # make_GUI()
     
