@@ -1,10 +1,12 @@
 # Digital Paper Scraper
 
+#### Version 1.0.0
+
 ## A python desktop app with Tkinter GUI for automatically webscraping Kijiji and Amazon with user input criteria
 
 ### This was created as my final project for Harvard's CS50x online course - Intro to Computer Science
 
-#### Version 1.0.0
+### Video Demo: https://www.youtube.com/watch?v=8X9YP-M9vxk&feature=youtu.be
 
 ### Motivation
 
@@ -15,12 +17,15 @@ When you're looking for a good deal, constantly checking Kijiji and Amazon for t
 To make this program, I had to learn:
 
 1. python GUIs
+
    - what GUIs are and how they work (continuous loops, user input, widget organization, etc)
    - which GUIs are available in Python
    - how to integrate them into software (arrangement, function calls, etc)
    - displaying dynamic content
    - downloading custom fonts
+
 2. webscraping
+
    - modules available (beautiful soup vs selenium)
    - how to download browser drivers
    - how to access typical headers from cURL requests
@@ -28,13 +33,16 @@ To make this program, I had to learn:
    - what HTML parsers are and how/why to use them
    - how to trick anti-webscraping tools deployed by developers (particularly Amazon)
    - how to organize and iterate through HTML
+
 3. automatic emailing
+
    - connecting to an email server
    - using environmental variables to keep sensitive info private
    - TTP vs SSL emails
    - plain text vs HTML emails
    - auto formatting HTML for dynamic content in python
    - using Gmail's API
+
 4. general python techniques
    - lambda functions
    - f strings or .format for html formatting
