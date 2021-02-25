@@ -43,6 +43,7 @@ def main():
             timer['text'] = '{:02d}:{:02d}:{:02d}:{:02d}'.format(days, hours, minutes, secs)
             root.update()
             t -= 1
+            # call countdown every 1000ms and update timer
             timer.after(1000, countdown)
     
     # executes when the GUI button is clicked
